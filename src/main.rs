@@ -22,6 +22,7 @@ fn model(app: &App) -> Model {
         .title(app.exe_name().unwrap())
         .size(WIDTH, HEIGHT)
         .view(view)
+        .key_pressed(key_pressed)
         .build()
         .unwrap();
 
@@ -45,4 +46,14 @@ fn view(app: &App, model: &Model, frame: Frame) {
     model.population.draw(&draw);
 
     draw.to_frame(app, &frame).unwrap();
+}
+
+fn key_pressed(_app: &App, mode: &mut Model, key: Key) {
+    match key {
+        Key::R => {
+            mode.population =
+                Population::new(1000, Vec2::new(0.0, -350.0), 400, Vec2::new(0.0, 350.0));
+        }
+        _ => {}
+    }
 }
