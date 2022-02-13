@@ -6,10 +6,10 @@ use nannou::prelude::*;
 
 pub struct Population {
     dots: Vec<Dot>,
-    gen: usize,
+    pub gen: usize,
     goal: Point2,
     initial_pos: Point2,
-    max_steps: usize,
+    pub max_steps: usize,
 }
 
 impl Population {

@@ -75,7 +75,7 @@ impl Dot {
     }
 
     pub fn draw(&self, draw: &Draw) {
-        draw.ellipse().x_y(self.pos.x, self.pos.y).w_h(10.0, 10.0).color(RED);
+        draw.ellipse().xy(self.pos).w_h(10.0, 10.0).color(RED);
     }
 }
 

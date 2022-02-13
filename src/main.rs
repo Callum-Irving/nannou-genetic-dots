@@ -45,6 +45,18 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     model.population.draw(&draw);
 
+    let text = String::from("Gen: ")
+        + &model.population.gen.to_string()
+        + "\nMax steps: "
+        + &model.population.max_steps.to_string();
+    let win_rect = app.main_window().rect().pad_left(280.0).pad_top(30.0);
+    draw.text(&text)
+        .color(BLACK)
+        .font_size(24)
+        .wh(win_rect.wh())
+        .xy(win_rect.top_left())
+        .left_justify();
+
     draw.to_frame(app, &frame).unwrap();
 }
 
