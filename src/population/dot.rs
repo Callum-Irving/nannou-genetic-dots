@@ -75,7 +75,7 @@ impl Dot {
     }
 
     pub fn draw(&self, draw: &Draw) {
-        draw.ellipse().xy(self.pos).w_h(10.0, 10.0).color(RED);
+        draw.ellipse().stroke(BLACK).xy(self.pos).w_h(10.0, 10.0).color(RED);
     }
 }
 
@@ -84,7 +84,7 @@ struct Genome {
     directions: Vec<Vec2>,
 }
 
-const MUTATION_RATE: f32 = 0.1;
+const MUTATION_RATE: f32 = 0.03;
 
 impl Genome {
     pub fn new(num_steps: usize) -> Self {

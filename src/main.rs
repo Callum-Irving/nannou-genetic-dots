@@ -7,8 +7,11 @@ use nannou::prelude::*;
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
 
+const POPULATION_SIZE: usize = 300;
+
+// TODO: Add feature to run generataions without displaying each frame (quick mode)
+
 fn main() {
-    // .size(WIDTH, HEIGHT)
     nannou::app(model).update(update).run()
 }
 
@@ -27,7 +30,12 @@ fn model(app: &App) -> Model {
         .unwrap();
 
     Model {
-        population: Population::new(1000, Vec2::new(0.0, -350.0), 400, Vec2::new(0.0, 350.0)),
+        population: Population::new(
+            POPULATION_SIZE,
+            Vec2::new(0.0, -350.0),
+            400,
+            Vec2::new(0.0, 350.0),
+        ),
     }
 }
 
@@ -63,8 +71,12 @@ fn view(app: &App, model: &Model, frame: Frame) {
 fn key_pressed(_app: &App, mode: &mut Model, key: Key) {
     match key {
         Key::R => {
-            mode.population =
-                Population::new(1000, Vec2::new(0.0, -350.0), 400, Vec2::new(0.0, 350.0));
+            mode.population = Population::new(
+                POPULATION_SIZE,
+                Vec2::new(0.0, -350.0),
+                400,
+                Vec2::new(0.0, 350.0),
+            );
         }
         _ => {}
     }
