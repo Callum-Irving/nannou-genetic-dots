@@ -9,14 +9,19 @@ const HEIGHT: u32 = 800;
 
 const POPULATION_SIZE: usize = 300;
 
-// TODO: Add feature to run generataions without displaying each frame (quick mode)
-
 fn main() {
     nannou::app(model).update(update).run()
 }
 
+#[derive(PartialEq)]
+enum AppStatus {
+    Waiting,
+    Running,
+}
+
 struct Model {
     population: Population,
+    status: AppStatus,
 }
 
 fn model(app: &App) -> Model {
@@ -36,14 +41,16 @@ fn model(app: &App) -> Model {
             400,
             Vec2::new(0.0, 350.0),
         ),
+        status: AppStatus::Waiting,
     }
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
-    if model.population.all_done() {
-        model.population.next_generation();
-    } else {
+    if model.status == AppStatus::Running && !model.population.all_done() {
         model.population.update();
+        if model.population.all_done() {
+            model.status = AppStatus::Waiting;
+        }
     }
 }
 
@@ -68,15 +75,31 @@ fn view(app: &App, model: &Model, frame: Frame) {
     draw.to_frame(app, &frame).unwrap();
 }
 
-fn key_pressed(_app: &App, mode: &mut Model, key: Key) {
+fn key_pressed(_app: &App, model: &mut Model, key: Key) {
     match key {
         Key::R => {
-            mode.population = Population::new(
+            model.population = Population::new(
                 POPULATION_SIZE,
                 Vec2::new(0.0, -350.0),
                 400,
                 Vec2::new(0.0, 350.0),
             );
+        }
+        Key::Space => {
+            if model.status == AppStatus::Waiting {
+                model.status = AppStatus::Running;
+                model.population.next_generation();
+                while !model.population.all_done() {
+                    model.population.update();
+                }
+                model.status = AppStatus::Waiting;
+            }
+        }
+        Key::S => {
+            if model.status == AppStatus::Waiting {
+                model.population.next_generation();
+                model.status = AppStatus::Running;
+            }
         }
         _ => {}
     }
