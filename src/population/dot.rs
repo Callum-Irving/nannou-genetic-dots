@@ -49,7 +49,7 @@ impl Dot {
                 let len = wall.0.distance(wall.1);
                 let d1 = wall.0.distance(self.pos);
                 let d2 = wall.1.distance(self.pos);
-                if (d1 + d2) - len < 2.0 {
+                if (d1 + d2) - len < 0.5 {
                     self.dead = true;
                 }
             }
