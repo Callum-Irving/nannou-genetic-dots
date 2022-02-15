@@ -8,7 +8,7 @@ use nannou_egui::{egui, Egui};
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
 
-const POPULATION_SIZE: usize = 300;
+const POPULATION_SIZE: usize = 500;
 const START: (f32, f32) = (0.0, -350.0);
 const GOAL: (f32, f32) = (0.0, 350.0);
 
@@ -20,12 +20,15 @@ fn main() {
 enum AppStatus {
     Waiting,
     Running,
+    Looping,
 }
 
 struct Model {
     population: Population,
     status: AppStatus,
     ui: Egui,
+    wall_start: Option<Point2>,
+    walls: Vec<(Point2, Point2)>,
 }
 
 fn model(app: &App) -> Model {
@@ -35,6 +38,8 @@ fn model(app: &App) -> Model {
         .size(WIDTH, HEIGHT)
         .view(view)
         .key_pressed(key_pressed)
+        .mouse_pressed(mouse_pressed)
+        .mouse_released(mouse_released)
         .build()
         .unwrap();
 
@@ -55,13 +60,20 @@ fn model(app: &App) -> Model {
         population: Population::new(POPULATION_SIZE, Vec2::from(START), 400, Vec2::from(GOAL)),
         status: AppStatus::Waiting,
         ui,
+        wall_start: None,
+        walls: vec![],
     }
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
     update_ui(model);
-    if model.status == AppStatus::Running && !model.population.all_done() {
-        model.population.update();
+    if model.status == AppStatus::Looping {
+        model.population.next_generation();
+        while !model.population.all_done() {
+            model.population.update(&model.walls);
+        }
+    } else if model.status == AppStatus::Running && !model.population.all_done() {
+        model.population.update(&model.walls);
         if model.population.all_done() {
             model.status = AppStatus::Waiting;
         }
@@ -71,6 +83,21 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
 fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();
     draw.background().color(SNOW);
+
+    if let Some(start_point) = model.wall_start {
+        draw.line()
+            .start(start_point)
+            .end(app.mouse.position())
+            .weight(4.0)
+            .color(GREEN);
+    }
+    for wall in model.walls.iter() {
+        draw.line()
+            .start(wall.0)
+            .end(wall.1)
+            .weight(4.0)
+            .color(STEELBLUE);
+    }
 
     model.population.draw(&draw);
 
@@ -88,7 +115,7 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
                 model.status = AppStatus::Running;
                 model.population.next_generation();
                 while !model.population.all_done() {
-                    model.population.update();
+                    model.population.update(&model.walls);
                 }
                 model.status = AppStatus::Waiting;
             }
@@ -100,6 +127,19 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
             }
         }
         _ => {}
+    }
+}
+
+fn mouse_pressed(app: &App, model: &mut Model, button: MouseButton) {
+    if button == MouseButton::Left {
+        model.wall_start = Some(app.mouse.position());
+    }
+}
+
+fn mouse_released(app: &App, model: &mut Model, button: MouseButton) {
+    if button == MouseButton::Left && model.wall_start.is_some() {
+        model.walls.push((model.wall_start.unwrap(), app.mouse.position()));
+        model.wall_start = None;
     }
 }
 
@@ -118,17 +158,36 @@ fn update_ui(model: &mut Model) {
         .show(&ctx, |ui| {
             ui.label("Generation: ".to_owned() + &model.population.gen.to_string());
             ui.label("Max steps: ".to_owned() + &model.population.max_steps.to_string());
-            if ui.button("Run slow generation").clicked() && model.status == AppStatus::Waiting {
-                model.population.next_generation();
-                model.status = AppStatus::Running;
-            };
-            if ui.button("Run fast generation").clicked() && model.status == AppStatus::Waiting {
-                model.status = AppStatus::Running;
-                model.population.next_generation();
-                while !model.population.all_done() {
-                    model.population.update();
+
+            if model.status != AppStatus::Looping {
+                if ui.button("Run slow generation").clicked() && model.status == AppStatus::Waiting
+                {
+                    model.population.next_generation();
+                    model.status = AppStatus::Running;
+                };
+                if ui.button("Run fast generation").clicked() && model.status == AppStatus::Waiting
+                {
+                    model.status = AppStatus::Running;
+                    model.population.next_generation();
+                    while !model.population.all_done() {
+                        model.population.update(&model.walls);
+                    }
+                    model.status = AppStatus::Waiting;
+                };
+                if ui.button("Loop fast generations").clicked()
+                    && model.status == AppStatus::Waiting
+                {
+                    model.status = AppStatus::Looping;
                 }
-                model.status = AppStatus::Waiting;
-            };
+            } else {
+                ui.add_enabled(false, egui::Button::new("Run slow generation"));
+                ui.add_enabled(false, egui::Button::new("Run fast generation"));
+                if ui.button("Stop looping").clicked() {
+                    while !model.population.all_done() {
+                        model.population.update(&model.walls);
+                    }
+                    model.status = AppStatus::Waiting;
+                }
+            }
         });
 }

@@ -28,12 +28,12 @@ impl Population {
         }
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, walls: &[(Point2, Point2)]) {
         for dot in self.dots.iter_mut() {
             if dot.step > self.max_steps {
                 dot.dead = true;
             } else {
-                dot.update(self.goal);
+                dot.update(self.goal, walls);
             }
         }
     }
@@ -96,9 +96,10 @@ impl Population {
     }
 
     pub fn draw(&self, draw: &Draw) {
-        for dot in self.dots.iter() {
+        for dot in self.dots.iter().skip(1) {
             dot.draw(&draw);
         }
+        self.dots[0].draw_blue(&draw);
 
         draw.ellipse()
             .x_y(self.goal.x, self.goal.y)

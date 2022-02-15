@@ -22,7 +22,7 @@ impl Dot {
         }
     }
 
-    pub fn update(&mut self, goal: Point2) {
+    pub fn update(&mut self, goal: Point2, walls: &[(Point2, Point2)]) {
         if self.dead || self.reached_goal {
             return;
         }
@@ -44,6 +44,15 @@ impl Dot {
             || self.pos.y >= 400.0
         {
             self.dead = true;
+        } else {
+            for wall in walls {
+                let len = wall.0.distance(wall.1);
+                let d1 = wall.0.distance(self.pos);
+                let d2 = wall.1.distance(self.pos);
+                if (d1 + d2) - len < 2.0 {
+                    self.dead = true;
+                }
+            }
         }
 
         self.step += 1;
@@ -51,7 +60,7 @@ impl Dot {
 
     pub fn calculate_fitness(&self, goal: Point2) -> f32 {
         if self.reached_goal {
-            return 1.0 / 25.0 + 1.0 / (self.step * self.step) as f32;
+            return 1.0 / 16.0 + 1.0 / (self.step * self.step) as f32;
         } else {
             let dist = self.pos.distance(goal);
             return 1.0 / (dist * dist);
@@ -75,7 +84,11 @@ impl Dot {
     }
 
     pub fn draw(&self, draw: &Draw) {
-        draw.ellipse().stroke(BLACK).xy(self.pos).w_h(10.0, 10.0).color(RED);
+        draw.ellipse().xy(self.pos).w_h(10.0, 10.0).color(RED);
+    }
+
+    pub fn draw_blue(&self, draw: &Draw) {
+        draw.ellipse().xy(self.pos).w_h(10.0, 10.0).color(BLUE);
     }
 }
 
