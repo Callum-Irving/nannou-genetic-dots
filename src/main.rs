@@ -32,7 +32,7 @@ struct Model {
 }
 
 fn model(app: &App) -> Model {
-    let _main_window = app
+    let window_id = app
         .new_window()
         .title(app.exe_name().unwrap())
         .size(WIDTH, HEIGHT)
@@ -40,21 +40,12 @@ fn model(app: &App) -> Model {
         .key_pressed(key_pressed)
         .mouse_pressed(mouse_pressed)
         .mouse_released(mouse_released)
-        .build()
-        .unwrap();
-
-    let ui_window = app
-        .new_window()
-        .title(app.exe_name().unwrap() + " controls")
-        .size(170, 160)
-        .view(ui_view)
         .raw_event(raw_ui_event)
-        .key_pressed(key_pressed)
         .build()
         .unwrap();
 
-    let ui_window_ref = app.window(ui_window).unwrap();
-    let ui = Egui::from_window(&ui_window_ref);
+    let window = app.window(window_id).unwrap();
+    let ui = Egui::from_window(&window);
 
     Model {
         population: Population::new(POPULATION_SIZE, Vec2::from(START), 400, Vec2::from(GOAL)),
@@ -102,6 +93,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
     model.population.draw(&draw);
 
     draw.to_frame(app, &frame).unwrap();
+    model.ui.draw_to_frame(&frame).unwrap();
 }
 
 fn key_pressed(_app: &App, model: &mut Model, key: Key) {
@@ -131,20 +123,18 @@ fn key_pressed(_app: &App, model: &mut Model, key: Key) {
 }
 
 fn mouse_pressed(app: &App, model: &mut Model, button: MouseButton) {
-    if button == MouseButton::Left {
+    if button == MouseButton::Right {
         model.wall_start = Some(app.mouse.position());
     }
 }
 
 fn mouse_released(app: &App, model: &mut Model, button: MouseButton) {
-    if button == MouseButton::Left && model.wall_start.is_some() {
-        model.walls.push((model.wall_start.unwrap(), app.mouse.position()));
+    if button == MouseButton::Right && model.wall_start.is_some() {
+        model
+            .walls
+            .push((model.wall_start.unwrap(), app.mouse.position()));
         model.wall_start = None;
     }
-}
-
-fn ui_view(_app: &App, model: &Model, frame: Frame) {
-    model.ui.draw_to_frame(&frame).unwrap();
 }
 
 fn raw_ui_event(_app: &App, model: &mut Model, event: &nannou::winit::event::WindowEvent) {
